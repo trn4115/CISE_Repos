@@ -2,9 +2,9 @@ name: CI_action
 
 on:
   push:
-    branches: [main]
+    branches: [feature/nest-web-server-setup, main]
   pull_request:
-    branches: [main]
+    branches: [feature/nest-web-server-setup, main]
 
 jobs:
   build:
