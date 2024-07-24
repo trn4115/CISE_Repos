@@ -1,0 +1,8 @@
+# Normalize all text files to LF
+* text=auto
+
+# Specific file types with LF endings
+*.js text eol=lf
+*.ts text eol=lf
+*.json text eol=lf
+*.md text eol=lf
