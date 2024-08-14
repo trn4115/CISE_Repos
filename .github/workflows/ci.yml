@@ -2,9 +2,11 @@ name: CI_action
 
 on:
   push:
-    branches: [main, feature/worksheet2-ci-cd]
+    branches: [main, Development, feature/worksheet2-ci-cd]
   pull_request:
-    branches: [main, feature/worksheet2-ci-cd]
+    branches: [main, Development, feature/worksheet2-ci-cd]
+  merge_group:
+    branches: [main, Development]
 
 jobs:
   build:
