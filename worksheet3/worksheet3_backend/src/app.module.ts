@@ -2,13 +2,15 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MongooseModule } from '@nestjs/mongoose';
+import { BookModule } from './api/books/book.module';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(), // Loads environment variables
+    ConfigModule.forRoot(),
     MongooseModule.forRoot(process.env.DB_URI),
-  ], // Uses the DB_URI from .env file
+    BookModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
