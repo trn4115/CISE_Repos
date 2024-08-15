@@ -1,5 +1,6 @@
 import { FormEvent, useState } from "react";
 import formStyles from "../../styles/Form.module.scss";
+import { createArticle } from "../../services/articleService";
 
 const NewDiscussion = () => {
   const [title, setTitle] = useState("");
@@ -9,21 +10,37 @@ const NewDiscussion = () => {
   const [doi, setDoi] = useState("");
   const [summary, setSummary] = useState("");
   const [linkedDiscussion, setLinkedDiscussion] = useState("");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const submitNewArticle = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    console.log(
-      JSON.stringify({
-        title,
-        authors,
-        source,
-        publication_year: pubYear,
-        doi,
-        summary,
-        linked_discussion: linkedDiscussion,
-      })
-    );
+    const newArticle = {
+      title,
+      authors,
+      source,
+      publication_year: pubYear,
+      doi,
+      summary,
+      linked_discussion: linkedDiscussion,
+    };
+
+    try {
+      await createArticle(newArticle);
+      setSuccessMessage("Article added successfully!");
+      // Clear the form after successful submission
+      setTitle("");
+      setAuthors([]);
+      setSource("");
+      setPubYear(0);
+      setDoi("");
+      setSummary("");
+      setLinkedDiscussion("");
+    } catch (error) {
+      setErrorMessage("Failed to add the article. Please try again.");
+      console.error("Error adding article:", error);
+    }
   };
 
   // Some helper methods for the authors array
@@ -50,6 +67,9 @@ const NewDiscussion = () => {
     <div className="container">
       <h1>New Article</h1>
       <form className={formStyles.form} onSubmit={submitNewArticle}>
+        {errorMessage && <p className="error">{errorMessage}</p>}
+        {successMessage && <p className="success">{successMessage}</p>}
+
         <label htmlFor="title">Title:</label>
         <input
           className={formStyles.formItem}
@@ -57,35 +77,31 @@ const NewDiscussion = () => {
           name="title"
           id="title"
           value={title}
-          onChange={(event) => {
-            setTitle(event.target.value);
-          }}
+          onChange={(event) => setTitle(event.target.value)}
         />
 
         <label htmlFor="author">Authors:</label>
-        {authors.map((author, index) => {
-          return (
-            <div key={`author ${index}`} className={formStyles.arrayItem}>
-              <input
-                type="text"
-                name="author"
-                value={author}
-                onChange={(event) => changeAuthor(index, event.target.value)}
-                className={formStyles.formItem}
-              />
-              <button
-                onClick={() => removeAuthor(index)}
-                className={formStyles.buttonItem}
-                style={{ marginLeft: "3rem" }}
-                type="button"
-              >
-                -
-              </button>
-            </div>
-          );
-        })}
+        {authors.map((author, index) => (
+          <div key={`author-${index}`} className={formStyles.arrayItem}>
+            <input
+              type="text"
+              name="author"
+              value={author}
+              onChange={(event) => changeAuthor(index, event.target.value)}
+              className={formStyles.formItem}
+            />
+            <button
+              onClick={() => removeAuthor(index)}
+              className={formStyles.buttonItem}
+              style={{ marginLeft: "3rem" }}
+              type="button"
+            >
+              -
+            </button>
+          </div>
+        ))}
         <button
-          onClick={() => addAuthor()}
+          onClick={addAuthor}
           className={formStyles.buttonItem}
           style={{ marginLeft: "auto" }}
           type="button"
@@ -100,9 +116,7 @@ const NewDiscussion = () => {
           name="source"
           id="source"
           value={source}
-          onChange={(event) => {
-            setSource(event.target.value);
-          }}
+          onChange={(event) => setSource(event.target.value)}
         />
 
         <label htmlFor="pubYear">Publication Year:</label>
@@ -114,11 +128,7 @@ const NewDiscussion = () => {
           value={pubYear}
           onChange={(event) => {
             const val = event.target.value;
-            if (val === "") {
-              setPubYear(0);
-            } else {
-              setPubYear(parseInt(val));
-            }
+            setPubYear(val === "" ? 0 : parseInt(val));
           }}
         />
 
@@ -129,9 +139,7 @@ const NewDiscussion = () => {
           name="doi"
           id="doi"
           value={doi}
-          onChange={(event) => {
-            setDoi(event.target.value);
-          }}
+          onChange={(event) => setDoi(event.target.value)}
         />
 
         <label htmlFor="summary">Summary:</label>
