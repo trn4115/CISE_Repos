@@ -1,5 +1,6 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useEffect } from "react";
 import formStyles from "@/styles/Form.module.scss";
+import { createArticle, fetchArticles } from "@/services/articleService"; // Add fetchArticles import
 
 const NewDiscussion = () => {
   const [title, setTitle] = useState("");
@@ -7,26 +8,58 @@ const NewDiscussion = () => {
   const [source, setSource] = useState("");
   const [pubYear, setPubYear] = useState<number>(0);
   const [doi, setDoi] = useState("");
-  const [summary, setSummary] = useState("");
-  const [linkedDiscussion, setLinkedDiscussion] = useState("");
+  const [claim, setClaim] = useState("");
+  const [evidenceLevel, setEvidenceLevel] = useState("");
+  const [message, setMessage] = useState<string | null>(null);
+  const [nextId, setNextId] = useState<number>(1); // Track the next available ID
+
+  useEffect(() => {
+    const fetchNextId = async () => {
+      try {
+        const articles = await fetchArticles(); // Fetch all articles
+        if (articles.length > 0) {
+          const maxId = Math.max(
+            ...articles.map((article: any) => article._id)
+          );
+          setNextId(maxId + 1); // Set next ID to maxId + 1
+        }
+      } catch (error) {
+        console.error("Error fetching articles:", error);
+      }
+    };
+
+    fetchNextId(); // Fetch the next ID on component mount
+  }, []);
 
   const submitNewArticle = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    console.log(
-      JSON.stringify({
-        title,
-        authors,
-        source,
-        publication_year: pubYear,
-        doi,
-        summary,
-        linked_discussion: linkedDiscussion,
-      })
-    );
-  };
+    const articleData = {
+      _id: nextId, // Use the next available ID
+      title,
+      authors: authors.join(", "),
+      source,
+      pubYear,
+      doi,
+      claim,
+      evidenceLevel,
+    };
 
-  // Some helper methods for the authors array
+    try {
+      await createArticle(articleData);
+      setMessage("Article submitted successfully!");
+      setNextId(nextId + 1); // Increment the next ID for subsequent submissions
+      setTitle("");
+      setAuthors([]);
+      setSource("");
+      setPubYear(0);
+      setDoi("");
+      setClaim("");
+      setEvidenceLevel("");
+    } catch (error) {
+      setMessage("Error submitting article. Please try again.");
+    }
+  };
 
   const addAuthor = () => {
     setAuthors(authors.concat([""]));
@@ -44,11 +77,10 @@ const NewDiscussion = () => {
     );
   };
 
-  // Return the full form
-
   return (
     <div className="container">
       <h1>New Article</h1>
+      {message && <p>{message}</p>}
       <form className={formStyles.form} onSubmit={submitNewArticle}>
         <label htmlFor="title">Title:</label>
         <input
@@ -57,35 +89,31 @@ const NewDiscussion = () => {
           name="title"
           id="title"
           value={title}
-          onChange={(event) => {
-            setTitle(event.target.value);
-          }}
+          onChange={(event) => setTitle(event.target.value)}
         />
 
         <label htmlFor="author">Authors:</label>
-        {authors.map((author, index) => {
-          return (
-            <div key={`author ${index}`} className={formStyles.arrayItem}>
-              <input
-                type="text"
-                name="author"
-                value={author}
-                onChange={(event) => changeAuthor(index, event.target.value)}
-                className={formStyles.formItem}
-              />
-              <button
-                onClick={() => removeAuthor(index)}
-                className={formStyles.buttonItem}
-                style={{ marginLeft: "3rem" }}
-                type="button"
-              >
-                -
-              </button>
-            </div>
-          );
-        })}
+        {authors.map((author, index) => (
+          <div key={`author ${index}`} className={formStyles.arrayItem}>
+            <input
+              type="text"
+              name="author"
+              value={author}
+              onChange={(event) => changeAuthor(index, event.target.value)}
+              className={formStyles.formItem}
+            />
+            <button
+              onClick={() => removeAuthor(index)}
+              className={formStyles.buttonItem}
+              style={{ marginLeft: "3rem" }}
+              type="button"
+            >
+              -
+            </button>
+          </div>
+        ))}
         <button
-          onClick={() => addAuthor()}
+          onClick={addAuthor}
           className={formStyles.buttonItem}
           style={{ marginLeft: "auto" }}
           type="button"
@@ -100,9 +128,7 @@ const NewDiscussion = () => {
           name="source"
           id="source"
           value={source}
-          onChange={(event) => {
-            setSource(event.target.value);
-          }}
+          onChange={(event) => setSource(event.target.value)}
         />
 
         <label htmlFor="pubYear">Publication Year:</label>
@@ -112,14 +138,7 @@ const NewDiscussion = () => {
           name="pubYear"
           id="pubYear"
           value={pubYear}
-          onChange={(event) => {
-            const val = event.target.value;
-            if (val === "") {
-              setPubYear(0);
-            } else {
-              setPubYear(parseInt(val));
-            }
-          }}
+          onChange={(event) => setPubYear(parseInt(event.target.value))}
         />
 
         <label htmlFor="doi">DOI:</label>
@@ -129,17 +148,27 @@ const NewDiscussion = () => {
           name="doi"
           id="doi"
           value={doi}
-          onChange={(event) => {
-            setDoi(event.target.value);
-          }}
+          onChange={(event) => setDoi(event.target.value)}
         />
 
-        <label htmlFor="summary">Summary:</label>
-        <textarea
-          className={formStyles.formTextArea}
-          name="summary"
-          value={summary}
-          onChange={(event) => setSummary(event.target.value)}
+        <label htmlFor="claim">Claim:</label>
+        <input
+          className={formStyles.formItem}
+          type="text"
+          name="claim"
+          id="claim"
+          value={claim}
+          onChange={(event) => setClaim(event.target.value)}
+        />
+
+        <label htmlFor="evidenceLevel">Evidence Level:</label>
+        <input
+          className={formStyles.formItem}
+          type="text"
+          name="evidenceLevel"
+          id="evidenceLevel"
+          value={evidenceLevel}
+          onChange={(event) => setEvidenceLevel(event.target.value)}
         />
 
         <button className={formStyles.formItem} type="submit">

@@ -1,16 +1,18 @@
-import { GetStaticProps, NextPage } from "next";
+// pages/articles/index.tsx
+
+import { GetServerSideProps, GetStaticProps, NextPage } from "next";
 import SortableTable from "@/components/table/SortableTable";
-import data from "@/utils/dummydata";
+import { fetchArticles } from "@/services/articleService";
 
 interface ArticlesInterface {
-  id: string;
+  _id: number;
   title: string;
   authors: string;
   source: string;
-  pubyear: string;
+  pubYear: number;
   doi: string;
   claim: string;
-  evidence: string;
+  evidenceLevel: string;
 }
 
 type ArticlesProps = {
@@ -22,10 +24,10 @@ const Articles: NextPage<ArticlesProps> = ({ articles }) => {
     { key: "title", label: "Title" },
     { key: "authors", label: "Authors" },
     { key: "source", label: "Source" },
-    { key: "pubyear", label: "Publication Year" },
+    { key: "pubYear", label: "Publication Year" },
     { key: "doi", label: "DOI" },
     { key: "claim", label: "Claim" },
-    { key: "evidence", label: "Evidence" },
+    { key: "evidenceLevel", label: "Evidence" },
   ];
 
   return (
@@ -37,24 +39,25 @@ const Articles: NextPage<ArticlesProps> = ({ articles }) => {
   );
 };
 
-export const getStaticProps: GetStaticProps<ArticlesProps> = async (_) => {
-  // Map the data to ensure all articles have consistent property names
-  const articles = data.map((article) => ({
-    id: article._id ?? article._id,
-    title: article.title,
-    authors: article.authors,
-    source: article.source,
-    pubyear: article.pubyear,
-    doi: article.doi,
-    claim: article.claim,
-    evidence: article.evidence,
-  }));
-
-  return {
-    props: {
-      articles,
-    },
-  };
+// Use getStaticProps to fetch data at build time (or getServerSideProps for server-side rendering)
+export const getServerSideProps: GetServerSideProps<ArticlesProps> = async (
+  _
+) => {
+  try {
+    const articles = await fetchArticles();
+    return {
+      props: {
+        articles,
+      },
+    };
+  } catch (error) {
+    console.error("Failed to fetch articles:", error);
+    return {
+      props: {
+        articles: [],
+      },
+    };
+  }
 };
 
 export default Articles;
