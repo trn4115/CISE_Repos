@@ -1,4 +1,3 @@
-// src/api/articles/article.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
@@ -7,7 +6,7 @@ export type ArticleDocument = Article & Document;
 @Schema()
 export class Article {
   @Prop({ required: true })
-  _id: string;
+  _id: number;
 
   @Prop({ required: true })
   title: string;
@@ -19,7 +18,7 @@ export class Article {
   source: string;
 
   @Prop({ required: true })
-  pubYear: string;
+  pubYear: number;
 
   @Prop({ required: true })
   doi: string;
